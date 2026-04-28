@@ -1,42 +1,100 @@
-function App() {
+// Main Routing Logic - Saglya pages yethe connect kelya ahet
+import React, { createContext, useState, useContext } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+
+// Auth Context - Login state track karnyasathi
+export const AuthContext = createContext(null);
+
+// useAuth hook - Components madhe use karnyasathi
+export const useAuth = () => useContext(AuthContext);
+
+// Protected Layout - Login kelya shivay access nahi milnar
+function ProtectedLayout({ children }) {
+  const { user } = useAuth();
+
+  if (!user) return <Navigate to="/" replace />;
+
   return (
-    <div style={{ background: "#111", minHeight: "100vh", color: "white", padding: "20px" }}>
-
-      <h1 style={{ fontSize: "28px", marginBottom: "20px" }}>
-        NetDiag Pro Dashboard 🚀
-      </h1>
-
-      {/* Cards */}
-      <div style={{ display: "flex", gap: "20px", marginBottom: "20px" }}>
-
-        <div style={{ background: "#222", padding: "20px", borderRadius: "10px", flex: 1 }}>
-          <h2 style={{ color: "#aaa" }}>Download Speed</h2>
-          <p style={{ fontSize: "24px" }}>50 Mbps</p>
-        </div>
-
-        <div style={{ background: "#222", padding: "20px", borderRadius: "10px", flex: 1 }}>
-          <h2 style={{ color: "#aaa" }}>Upload Speed</h2>
-          <p style={{ fontSize: "24px" }}>20 Mbps</p>
-        </div>
-
-        <div style={{ background: "#222", padding: "20px", borderRadius: "10px", flex: 1 }}>
-          <h2 style={{ color: "#aaa" }}>Ping</h2>
-          <p style={{ fontSize: "24px" }}>15 ms</p>
-        </div>
-
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Header />
+        <main style={{
+          flex: 1,
+          padding: '32px',
+          overflowY: 'auto',
+          background: 'var(--bg-primary)'
+        }}>
+          {children}
+        </main>
       </div>
-
-      {/* Graph Section */}
-      <div style={{ background: "#222", padding: "20px", borderRadius: "10px" }}>
-        <h2>Network Performance 📊</h2>
-
-        <div style={{ height: "200px", display: "flex", alignItems: "center", justifyContent: "center", color: "#777" }}>
-          Graph coming soon...
-        </div>
-      </div>
-
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  const [user, setUser] = useState(null);
+
+  const login = (userData) => setUser(userData);
+  const logout = () => setUser(null);
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout }}>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Route */}
+          <Route path="/" element={<Login />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/home"
+            element={
+              user ? (
+                <ProtectedLayout>
+                  <Home />
+                </ProtectedLayout>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              user ? (
+                <ProtectedLayout>
+                  <Reports />
+                </ProtectedLayout>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              user ? (
+                <ProtectedLayout>
+                  <Settings />
+                </ProtectedLayout>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthContext.Provider>
+  );
+}
